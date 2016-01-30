@@ -1,73 +1,107 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class PolygonSolver : MonoBehaviour {
+
+    class CollisionPoint {
+        public int index;
+        public Vector2 point;
+    }
 
     public LayerMask LayerMask;
     public Torch[] Torches;
 
-    Vector2[] collisionPoints = new Vector2[100];
-    GameObject[] collisionDots = new GameObject[100];
-    public GameObject CollisionDotPrefab;
+    public const int MAX_COLLISION_POINTS = 100;
+    List<CollisionPoint> collisionPoints = new List<CollisionPoint>(MAX_COLLISION_POINTS);
+    bool[][] adjacencies;
     [Range(0, 1)]
     public float SqrMagnitudeThreshold = 0.1f;
 
+    GameObject[] collisionDots = new GameObject[MAX_COLLISION_POINTS];
+    public GameObject CollisionDotPrefab;
+
 	void Start() {
 	    Torches = FindObjectsOfType<Torch>();
-
-	    for (int i = 0; i < collisionDots.Length; i++) {
-	        collisionDots[i] = Instantiate(CollisionDotPrefab);
-	        collisionDots[i].transform.parent = transform;
-	    }
+        
+        adjacencies = new bool[MAX_COLLISION_POINTS][];
+        for (int i = 0; i < MAX_COLLISION_POINTS; i++) {
+            adjacencies[i] = new bool[MAX_COLLISION_POINTS];
+            collisionDots[i] = Instantiate(CollisionDotPrefab);
+            collisionDots[i].transform.parent = transform;
+        }
 	}
 
     void Update() {
         // reset collision points
-        for (int i = 0; i < collisionPoints.Length; i++) {
-            collisionPoints[i] = Vector2.zero;
-            collisionDots[i].SetActive(false);
+        {
+            collisionPoints.Clear();
+            for (int i = 0; i < MAX_COLLISION_POINTS; i++) {
+                collisionDots[i].SetActive(false);
+                for (int j = 0; j < MAX_COLLISION_POINTS; j++) {
+                    adjacencies[i][j] = false;
+                }
+            }
         }
         // get all collision points
-        var collisions = 0;
-        for (int t = 0; t < Torches.Length; t++) {
-            var torch = Torches[t];
-            var vectorToLine = torch.LineEnd - torch.transform.position.to2();
-            var distToLine = vectorToLine.magnitude;
-            var angleToLine = Mathf.Atan2(vectorToLine.y, vectorToLine.x);
-            var results = new RaycastHit2D[100];
-            for (int i = 0; i < Torches.Length; i++) {
-                var lineCollider = Torches[i].LineCollider;
-                var count = Physics2D.RaycastNonAlloc(torch.transform.position, vectorToLine, results, distToLine, LayerMask);
-                for (int j = 0; j < count; j++) {
-                    var hit = results[j];
-                    if (hit.collider != torch.LineCollider) {
-                        collisionPoints[collisions] = hit.point;
-                        collisions++;
+        {
+            for (int t = 0; t < Torches.Length; t++) {
+                var torch = Torches[t];
+                var vectorToLine = torch.LineEnd - torch.transform.position.to2();
+                var distToLine = vectorToLine.magnitude;
+                var angleToLine = Mathf.Atan2(vectorToLine.y, vectorToLine.x);
+                var results = new RaycastHit2D[MAX_COLLISION_POINTS];
+                for (int i = 0; i < Torches.Length; i++) {
+                    var lineCollider = Torches[i].LineCollider;
+                    var count = Physics2D.RaycastNonAlloc(torch.transform.position, vectorToLine, results, distToLine, LayerMask);
+                    CollisionPoint previousPoint = null;
+                    for (int j = 0; j < count; j++) {
+                        var hit = results[j];
+                        if (hit.collider != torch.LineCollider) {
+                            CollisionPoint collisionPoint = null;
+                            for (int k = 0; k < collisionPoints.Count; k++) {
+                                if ((hit.point - collisionPoints[k].point).sqrMagnitude < SqrMagnitudeThreshold) {
+                                    collisionPoint = collisionPoints[k];
+                                };
+                            }
+                            if (collisionPoint == null) {
+                                collisionPoint = new CollisionPoint {
+                                    index = collisionPoints.Count,
+                                    point = hit.point,
+                                };
+                                collisionPoints.Add(collisionPoint);
+                            }
+                            for (int c = 0; previousPoint != null && c < count; c++) {
+                                adjacencies[collisionPoint.index][previousPoint.index] = adjacencies[previousPoint.index][collisionPoint.index] = true;
+                            }
+                            previousPoint = collisionPoint;
+                        }
                     }
                 }
             }
         }
-        // sort points from highest to lowest
-        Array.Sort(collisionPoints, (p1, p2) => -Math.Abs(p1.x * 100000 + p1.y).CompareTo(Math.Abs(p2.x * 100000 + p2.y)));
-        // set dots based on collision points
-        var previousPoint = Vector2.zero;
-        var drawn = 0;
-        for (int i = 0; i < collisionPoints.Length; i++) {
-            var point = collisionPoints[i];
-            if ((point - previousPoint).sqrMagnitude < SqrMagnitudeThreshold) {
-                continue;
+        // setup dots based on final points
+        {
+            for (int i = 0; i < collisionPoints.Count; i++) {
+                var dot = collisionDots[i];
+                dot.transform.position = collisionPoints[i].point;
+                dot.SetActive(true);
             }
-            if (point == Vector2.zero) {
-                break;
-            }
-            var dot = collisionDots[drawn];
-            dot.transform.position = point;
-            dot.SetActive(true);
-            drawn++;
-            previousPoint = point;
         }
+        // detect polygons! http://web.ist.utl.pt/alfredo.ferreira/publications/12EPCG-PolygonDetection.pdf
+        {
+            
+        }
+    }
 
-        Debug.Log("points=" + collisions + " drawn=" + drawn);
+    void OnDrawGizmos() {
+        for (int i = 0; i < MAX_COLLISION_POINTS; i++) {
+            for (int j = 0; j < MAX_COLLISION_POINTS; j++) {
+                if (adjacencies[i][j]) {
+                    Gizmos.DrawLine(collisionPoints[i].point, collisionPoints[j].point);
+                }
+            }
+        }
     }
 }
