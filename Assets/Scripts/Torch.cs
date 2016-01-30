@@ -43,4 +43,8 @@ public class Torch : MonoBehaviour {
         lineSprite.transform.localScale = new Vector3(distToLine, 0.4f, 0.4f);
         lineSprite.transform.localPosition = new Vector3(distToLine/2, 0, 0);
     }
+
+    void OnDisable() {
+        LineEnd = transform.position;
+    }
 }

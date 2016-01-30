@@ -142,7 +142,6 @@ public class PolygonSolver : MonoBehaviour {
                 polygons.Add(pair.Value[0]);
             }
         }
-        Debug.Log(polygons.Count);
         // setup dots based on final points
         {
             for (int i = 0; i < collisionPoints.Count; i++) {
