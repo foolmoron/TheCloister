@@ -56,7 +56,8 @@ public class Loader : MonoBehaviour {
                 }
             }
             LoadingText.gameObject.SetActive(false);
-            polygonSolver.Torches = Levels[currentLevel].GetComponentsInChildren<Torch>();
+            polygonSolver.Vertexes = Levels[currentLevel].Vertexes;
+            polygonSolver.LineColliders = Levels[currentLevel].LineColliders;
         });
     }
 

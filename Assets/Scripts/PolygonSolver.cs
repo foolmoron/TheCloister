@@ -18,7 +18,9 @@ public class PolygonSolver : MonoBehaviour {
     }
 
     public LayerMask LayerMask;
-    public Torch[] Torches;
+
+    public List<Vector2> Vertexes;
+    public Collider2D[] LineColliders;
 
     public const int MAX_COLLISION_POINTS = 100;
     List<CollisionPoint> collisionPoints = new List<CollisionPoint>(MAX_COLLISION_POINTS);
@@ -32,8 +34,6 @@ public class PolygonSolver : MonoBehaviour {
     public GameObject CollisionDotPrefab;
 
     void Start() {
-        Torches = FindObjectsOfType<Torch>();
-        
         adjacencies = new bool[MAX_COLLISION_POINTS][];
         for (int i = 0; i < MAX_COLLISION_POINTS; i++) {
             adjacencies[i] = new bool[MAX_COLLISION_POINTS];
@@ -55,37 +55,36 @@ public class PolygonSolver : MonoBehaviour {
         }
         // get all collision points
         {
-            for (int t = 0; t < Torches.Length; t++) {
-                var torch = Torches[t];
-                var vectorToLine = torch.LineEnd - torch.transform.position.to2();
+            for (int v = 1; v < Vertexes.Count; v++) {
+                var currentVertex = Vertexes[v];
+                var prevVertex = Vertexes[v - 1];
+                var currentLineCollider = LineColliders[v - 1];
+                var vectorToLine = currentVertex - prevVertex;
                 var distToLine = vectorToLine.magnitude;
                 var angleToLine = Mathf.Atan2(vectorToLine.y, vectorToLine.x);
                 var results = new RaycastHit2D[MAX_COLLISION_POINTS];
-                for (int i = 0; i < Torches.Length; i++) {
-                    var lineCollider = Torches[i].LineCollider;
-                    var count = Physics2D.RaycastNonAlloc(torch.transform.position, vectorToLine, results, distToLine, LayerMask);
-                    CollisionPoint previousPoint = null;
-                    for (int j = 0; j < count; j++) {
-                        var hit = results[j];
-                        if (hit.collider != torch.LineCollider) {
-                            CollisionPoint collisionPoint = null;
-                            for (int k = 0; k < collisionPoints.Count; k++) {
-                                if ((hit.point - collisionPoints[k].point).sqrMagnitude < SqrMagnitudeThreshold) {
-                                    collisionPoint = collisionPoints[k];
-                                };
-                            }
-                            if (collisionPoint == null) {
-                                collisionPoint = new CollisionPoint {
-                                    index = collisionPoints.Count,
-                                    point = hit.point,
-                                };
-                                collisionPoints.Add(collisionPoint);
-                            }
-                            for (int c = 0; previousPoint != null && c < count; c++) {
-                                adjacencies[collisionPoint.index][previousPoint.index] = adjacencies[previousPoint.index][collisionPoint.index] = true;
-                            }
-                            previousPoint = collisionPoint;
+                var count = Physics2D.RaycastNonAlloc(prevVertex, vectorToLine, results, distToLine, LayerMask);
+                CollisionPoint previousPoint = null;
+                for (int j = 0; j < count; j++) {
+                    var hit = results[j];
+                    if (hit.collider != currentLineCollider) {
+                        CollisionPoint collisionPoint = null;
+                        for (int k = 0; k < collisionPoints.Count; k++) {
+                            if ((hit.point - collisionPoints[k].point).sqrMagnitude < SqrMagnitudeThreshold) {
+                                collisionPoint = collisionPoints[k];
+                            };
                         }
+                        if (collisionPoint == null) {
+                            collisionPoint = new CollisionPoint {
+                                index = collisionPoints.Count,
+                                point = hit.point,
+                            };
+                            collisionPoints.Add(collisionPoint);
+                        }
+                        for (int c = 0; previousPoint != null && c < count; c++) {
+                            adjacencies[collisionPoint.index][previousPoint.index] = adjacencies[previousPoint.index][collisionPoint.index] = true;
+                        }
+                        previousPoint = collisionPoint;
                     }
                 }
             }
