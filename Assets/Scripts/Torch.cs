@@ -13,6 +13,8 @@ public class Torch : MonoBehaviour {
     public AudioClip FireOnSound;
     public AudioClip FireOffSound;
 
+    public bool ForceGlowOn;
+
     ParticleSystem particles;
     SpriteRenderer sprite;
     Shaker shaker;
@@ -26,7 +28,8 @@ public class Torch : MonoBehaviour {
 	
 	void Update() {
         particles.enableEmission = Active;
-        shaker.gameObject.SetActive(Active);
+        ForceGlowOn = ForceGlowOn && !Active;
+        shaker.gameObject.SetActive(ForceGlowOn || Active);
         sprite.sprite = Active ? ActiveSprite : InactiveSprite;
         if (prevActive != Active) {
             AudioSource.PlayClipAtPoint(Active ? FireOnSound : FireOffSound, transform.position);
