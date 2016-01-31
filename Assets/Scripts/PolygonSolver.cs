@@ -20,7 +20,7 @@ public class PolygonSolver : MonoBehaviour {
     public class StrayLine {
         public Vector2 Start;
         public Vector2 End;
-        public float Degrees { get { return Mathf.Atan2(End.y - Start.y, End.x - Start.y); } }
+        public float Degrees { get { return Mathf.Atan2(End.y - Start.y, End.x - Start.x) * Mathf.Rad2Deg; } }
     }
 
     public LayerMask LayerMask;
