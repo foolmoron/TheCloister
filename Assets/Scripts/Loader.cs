@@ -92,6 +92,7 @@ public class Loader : MonoBehaviour {
     }
 
     void Update() {
+#if DEBUG
         if (Input.GetKeyDown(KeyCode.P)) {
             PlayerPrefs.SetInt("solved", 0);
             for (int i = 0; i < Levels.Length; i++) {
@@ -99,5 +100,13 @@ public class Loader : MonoBehaviour {
                 Levels[i].Vertexes.Clear();
             }
         }
+        if (Input.GetKeyDown(KeyCode.U)) {
+            PlayerPrefs.SetInt("solved", 999);
+            for (int i = 0; i < Levels.Length; i++) {
+                Levels[i].Solved = true;
+                Levels[i].Vertexes.Clear();
+            }
+        }
+#endif
     }
 }
