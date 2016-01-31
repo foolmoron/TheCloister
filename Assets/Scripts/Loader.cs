@@ -26,6 +26,8 @@ public class Loader : MonoBehaviour {
     public TextMesh LoadingText;
     public TextMesh LoadingText2;
 
+    public AudioClip WinSound;
+
     PolygonSolver polygonSolver;
 
     IEnumerator Start() {
@@ -73,6 +75,7 @@ public class Loader : MonoBehaviour {
 
     public void Win() {
         PlayerPrefs.SetInt("solved", Mathf.Max(PlayerPrefs.GetInt("solved"), currentLevel + 1));
+        AudioSource.PlayClipAtPoint(WinSound, transform.position);
     }
 
     public void NextLevel() {
