@@ -54,7 +54,7 @@ public class Level : MonoBehaviour {
             var angle = SolutionLineAngles[i];
             var matched = false;
             for (int j = 0; j < polygonSolver.StrayLines.Count; j++) {
-                if (!alreadyMatchedLines.Contains(j) && Mathf.Abs(angle - polygonSolver.StrayLines[j].Degrees % 180) < 20f) {
+                if (!alreadyMatchedLines.Contains(j) && Mathf.Abs(angle - (polygonSolver.StrayLines[j].Degrees + 360) % 180) < 10f) {
                     matched = true;
                     alreadyMatchedLines.Add(j);
                 }
