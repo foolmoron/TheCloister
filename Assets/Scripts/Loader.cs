@@ -20,7 +20,7 @@ public class Loader : MonoBehaviour {
     public float LevelGap = 9.6f;
 
     public Level[] Levels;
-    int currentLevel;
+    public int currentLevel { get; set; }
 
     public TextMesh LoadingText;
 
