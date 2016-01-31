@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class Loader : MonoBehaviour {
 
@@ -87,6 +88,7 @@ public class Loader : MonoBehaviour {
             PlayerPrefs.SetInt("solved", 0);
             for (int i = 0; i < Levels.Length; i++) {
                 Levels[i].Solved = false;
+                Levels[i].Vertexes.Clear();
             }
         }
     }
