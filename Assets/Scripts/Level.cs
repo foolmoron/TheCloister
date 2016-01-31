@@ -11,12 +11,15 @@ public class Level : MonoBehaviour {
     public int SolutionTriangles;
     [Range(0, 5)]
     public int SolutionSquares;
+    [Range(0, 5)]
+    public int SolutionPentagons;
 
     public bool Solved;
 
     public GameObject IconLinePrefab;
     public GameObject IconTrianglePrefab;
     public GameObject IconSquarePrefab;
+    public GameObject IconPentagonPrefab;
     [Range(0, 3)]
     public float IconGap = 0.6f;
     public float IconY = 2.5f;
@@ -38,7 +41,7 @@ public class Level : MonoBehaviour {
     void Awake() {
         // setup icons
         {
-            var solutionCount = SolutionLineAngles.Length + SolutionTriangles + SolutionSquares;
+            var solutionCount = SolutionLineAngles.Length + SolutionTriangles + SolutionSquares + SolutionPentagons;
             var x = (float)(solutionCount - 1) * -IconGap / 2;
             for (int i = 0; i < solutionCount; i++) {
                 GameObject newIcon = null;
@@ -48,6 +51,8 @@ public class Level : MonoBehaviour {
                     newIcon = Instantiate(IconTrianglePrefab);
                 } else if (i < SolutionLineAngles.Length + SolutionTriangles + SolutionSquares) {
                     newIcon = Instantiate(IconSquarePrefab);
+                } else if (i < SolutionLineAngles.Length + SolutionTriangles + SolutionSquares + SolutionPentagons) {
+                    newIcon = Instantiate(IconPentagonPrefab);
                 }
                 newIcon.transform.parent = transform;
                 newIcon.transform.localPosition = new Vector3(x + i * IconGap, IconY, 10);
@@ -95,15 +100,24 @@ public class Level : MonoBehaviour {
 
         var matchingTriangles = 0;
         var matchingSquares = 0;
+        var matchingPentagons = 0;
         for (int i = 0; i < polygonSolver.Polygons.Count; i++) {
             if (polygonSolver.Polygons[i].indexes.Count == 4) {
                 matchingTriangles++;
             } else if (polygonSolver.Polygons[i].indexes.Count == 5) {
                 matchingSquares++;
+            } else if (polygonSolver.Polygons[i].indexes.Count == 6) {
+                matchingPentagons++;
             }
         }
 
-        var solved = allTorches && (matchingStrayLines == SolutionLineAngles.Length) && (matchingTriangles == SolutionTriangles) && (matchingSquares == SolutionSquares);
+        var solved = 
+            allTorches 
+            && (matchingStrayLines == SolutionLineAngles.Length) 
+            && (matchingTriangles == SolutionTriangles) 
+            && (matchingSquares == SolutionSquares)
+            && (matchingPentagons == SolutionPentagons)
+            ;
         return solved;
     }
 
