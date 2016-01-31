@@ -35,6 +35,7 @@ public class Loader : MonoBehaviour {
             Levels[i] = FindObjectOfType<Level>();
             Levels[i].gameObject.SetActive(false);
             Levels[i].transform.position = transform.position.plusX(LevelGap * i);
+            Levels[i].Solved = PlayerPrefs.GetInt("solved") > i;
         }
         ActivateLevel(0, true);
 	}
@@ -67,7 +68,7 @@ public class Loader : MonoBehaviour {
     }
 
     public void Win() {
-        NextLevel();
+        PlayerPrefs.SetInt("solved", Mathf.Max(PlayerPrefs.GetInt("solved"), currentLevel + 1));
     }
 
     public void NextLevel() {
@@ -79,5 +80,11 @@ public class Loader : MonoBehaviour {
     }
 
     void Update() {
+        if (Input.GetKeyDown(KeyCode.P)) {
+            PlayerPrefs.SetInt("solved", 0);
+            for (int i = 0; i < Levels.Length; i++) {
+                Levels[i].Solved = false;
+            }
+        }
     }
 }

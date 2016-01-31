@@ -12,6 +12,8 @@ public class Level : MonoBehaviour {
     [Range(0, 5)]
     public int SolutionSquares;
 
+    public bool Solved;
+
     public GameObject IconLinePrefab;
     public GameObject IconTrianglePrefab;
     public GameObject IconSquarePrefab;
@@ -68,7 +70,7 @@ public class Level : MonoBehaviour {
         }
     }
 
-    public void CheckVictory() {
+    public bool CheckVictory() {
         var allTorches = true;
         for (int i = 0; i < torches.Length; i++) {
             var pos = torches[i].transform.position.to2();
@@ -102,9 +104,7 @@ public class Level : MonoBehaviour {
         }
 
         var solved = allTorches && (matchingStrayLines == SolutionLineAngles.Length) && (matchingTriangles == SolutionTriangles) && (matchingSquares == SolutionSquares);
-        if (solved) {
-            loader.Win();
-        }
+        return solved;
     }
 
     void Update() {
@@ -121,17 +121,8 @@ public class Level : MonoBehaviour {
                 }
                 if (torch != null) {
                     var torchPos = torch.transform.position.to2();
-                    if (Vertexes.Count != 0) {
-                        while (Vertexes.Count > 0) {
-                            if (Vertexes[Vertexes.Count - 1] == torchPos) {
-                                break;
-                            }
-                            Vertexes.RemoveAt(Vertexes.Count - 1);
-                        }
-                    }
-                    if (Vertexes.Count == 0) {
-                        Vertexes.Add(torchPos);
-                    }
+                    Vertexes.Clear();
+                    Vertexes.Add(torchPos);
                     Vertexes.Add(mouseWorldPos); // will be updated on drag
                     isDrawing = true;
                 }
@@ -142,7 +133,14 @@ public class Level : MonoBehaviour {
                     Vertexes.RemoveAt(Vertexes.Count - 1);
                     // then check for victory
                     polygonSolver.Solve();
-                    CheckVictory();
+                    if (CheckVictory()) {
+                        // handle victory
+                        Solved = true;
+                        loader.Win();
+                    } else {
+                        // handle failure
+                        Vertexes.Clear();
+                    }
                 }
             } else if (Input.GetMouseButton(0) && isDrawing) {
                 // check for collision with new torch
