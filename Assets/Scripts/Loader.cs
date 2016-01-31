@@ -108,5 +108,8 @@ public class Loader : MonoBehaviour {
             }
         }
 #endif
+        if (Input.GetKeyDown(KeyCode.M)) {
+            AudioListener.volume = AudioListener.volume == 0 ? 1 : 0;
+        }
     }
 }
