@@ -23,6 +23,7 @@ public class Loader : MonoBehaviour {
     public int currentLevel { get; set; }
 
     public TextMesh LoadingText;
+    public TextMesh LoadingText2;
 
     PolygonSolver polygonSolver;
 
@@ -60,7 +61,9 @@ public class Loader : MonoBehaviour {
         };
         if (!isInitial) {
             LoadingText.gameObject.SetActive(true);
+            LoadingText2.gameObject.SetActive(true);
             LoadingText.text = ROMAN_NUMERALS[currentLevel];
+            LoadingText2.text = ROMAN_NUMERALS[currentLevel];
             Tween.MoveTo(Camera.main.gameObject, Camera.main.transform.position.withX(LevelGap * currentLevel), 1f, Interpolate.EaseType.EaseOutQuart, finishLevelTransition);
         } else {
             finishLevelTransition(null);

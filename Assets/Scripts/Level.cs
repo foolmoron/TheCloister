@@ -29,7 +29,6 @@ public class Level : MonoBehaviour {
     public const int MAX_LINES = 100;
     public GameObject LinePrefab;
     GameObject[] lines = new GameObject[MAX_LINES];
-    GameObject[] lineSprites = new GameObject[MAX_LINES];
     public Collider2D[] LineColliders = new Collider2D[MAX_LINES];
 
     bool isDrawing;
@@ -70,7 +69,6 @@ public class Level : MonoBehaviour {
             lines[i] = Instantiate(LinePrefab);
             lines[i].transform.parent = transform;
             lines[i].transform.localPosition = Vector3.zero;
-            lineSprites[i] = lines[i].GetComponentInChildren<SpriteRenderer>().gameObject;
             LineColliders[i] = lines[i].GetComponentInChildren<Collider2D>();
         }
     }
@@ -195,12 +193,25 @@ public class Level : MonoBehaviour {
                 var distToLine = vectorToLine.magnitude;
                 var angleToLine = Mathf.Atan2(vectorToLine.y, vectorToLine.x);
                 var line = lines[i - 1];
-                var lineSprite = lineSprites[i - 1];
+                var lineCollider = LineColliders[i - 1];
                 line.SetActive(true);
                 line.transform.position = prevVert;
                 line.transform.rotation = Quaternion.Euler(0, 0, angleToLine * Mathf.Rad2Deg);
-                lineSprite.transform.localScale = new Vector3(distToLine, 0.4f, 0.4f);
-                lineSprite.transform.localPosition = new Vector3(distToLine / 2, 0, 0);
+                lineCollider.transform.localScale = lineCollider.transform.localScale.withX(distToLine);
+                lineCollider.transform.localPosition = new Vector3(distToLine / 2, 0, 5f);
+            }
+        }
+        // set torch state based on current vertexes
+        {
+            for (int t = 0; t < torches.Length; t++) {
+                torches[t].Active = false;
+            }
+            for (int i = 0; i < Vertexes.Count; i++) {
+                for (int t = 0; t < torches.Length; t++) {
+                    if (torches[t].transform.position.to2() == Vertexes[i]) {
+                        torches[t].Active = true;
+                    }
+                }
             }
         }
     }

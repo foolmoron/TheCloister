@@ -48,12 +48,12 @@ public class PolygonSolver : MonoBehaviour {
             collisionDots[i].transform.parent = transform;
         }
     }
-
+    
     void Update() {
-        Solve();
+        CollisionPointStuff();
     }
 
-    public void Solve() {
+    public void CollisionPointStuff() {
         // reset collision points
         {
             collisionPoints.Clear();
@@ -77,12 +77,12 @@ public class PolygonSolver : MonoBehaviour {
                 var count = Physics2D.RaycastNonAlloc(prevVertex, vectorToLine, results, distToLine, LayerMask);
                 CollisionPoint previousPoint = null;
                 for (int k = 0; k < collisionPoints.Count; k++) {
-                    if ((prevVertex- collisionPoints[k].point).sqrMagnitude < SqrMagnitudeThreshold) {
+                    if ((prevVertex - collisionPoints[k].point).sqrMagnitude < SqrMagnitudeThreshold) {
                         previousPoint = collisionPoints[k];
                     };
                 }
                 if (previousPoint == null) {
-                    previousPoint= new CollisionPoint {
+                    previousPoint = new CollisionPoint {
                         index = collisionPoints.Count,
                         point = prevVertex,
                     };
@@ -128,6 +128,18 @@ public class PolygonSolver : MonoBehaviour {
                 }
             }
         }
+        // setup dots based on final points
+        {
+            for (int i = 0; i < collisionPoints.Count; i++) {
+                var dot = collisionDots[i];
+                dot.transform.position = collisionPoints[i].point;
+                dot.SetActive(true);
+            }
+        }
+    }
+
+    public void Solve() {
+        CollisionPointStuff();
         // reset paths
         {
             paths.Clear();
@@ -226,14 +238,6 @@ public class PolygonSolver : MonoBehaviour {
                 }
             }
         }
-        // setup dots based on final points
-        {
-            for (int i = 0; i < collisionPoints.Count; i++) {
-                var dot = collisionDots[i];
-                dot.transform.position = collisionPoints[i].point;
-                dot.SetActive(true);
-            }
-        }
     }
 
     class SetComparer : IEqualityComparer<HashSet<int>> {
@@ -246,6 +250,7 @@ public class PolygonSolver : MonoBehaviour {
         }
     }
 
+#if UNITY_EDITOR
     void OnDrawGizmos() {
         if (Application.isPlaying) {
             for (int i = 0; i < MAX_COLLISION_POINTS; i++) {
@@ -258,12 +263,16 @@ public class PolygonSolver : MonoBehaviour {
             for (int i = 0; i < collisionPoints.Count; i++) {
                 drawString(i.ToString(), collisionPoints[i].point, Color.white);
             }
-            for (int i = 0; i < Polygons.Count; i++) {
-                Gizmos.color = new HSBColor(Mathf.Lerp(0.25f, 0.8f, (float)i / (Polygons.Count - 1)), 1, 1).ToColor();
-                var polygon = Polygons[i];
-                for (int j = 1; j < polygon.indexes.Count; j++) {
-                    Gizmos.DrawLine(collisionPoints[polygon.indexes[j]].point, collisionPoints[polygon.indexes[j - 1]].point);
+            try {
+                for (int i = 0; i < Polygons.Count; i++) {
+                    Gizmos.color = new HSBColor(Mathf.Lerp(0.25f, 0.8f, (float)i / (Polygons.Count - 1)), 1, 1).ToColor();
+                    var polygon = Polygons[i];
+                    for (int j = 1; j < polygon.indexes.Count; j++) {
+                        Gizmos.DrawLine(collisionPoints[polygon.indexes[j]].point, collisionPoints[polygon.indexes[j - 1]].point);
+                    }
                 }
+            } catch {
+
             }
         }
     }
@@ -278,4 +287,5 @@ public class PolygonSolver : MonoBehaviour {
         GUI.Label(new Rect(screenPos.x - (size.x / 2), -screenPos.y + view.position.height, size.x, size.y), text);
         UnityEditor.Handles.EndGUI();
     }
+#endif
 }

@@ -2,18 +2,34 @@
 using System.Collections;
 
 public class Torch : MonoBehaviour {
+
     public Collider2D Collider;
+    public bool Active;
+
+    public Sprite InactiveSprite;
+    public Sprite ActiveSprite;
+
+    ParticleSystem particles;
+    SpriteRenderer sprite;
+    Shaker shaker;
 
     void Start() {
         Collider = GetComponent<Collider2D>();
+        particles = GetComponentInChildren<ParticleSystem>();
+        sprite = transform.FindChild("Square").GetComponent<SpriteRenderer>();
+        shaker = GetComponentInChildren<Shaker>();
 	}
 	
 	void Update() {
+        particles.enableEmission = Active;
+        shaker.gameObject.SetActive(Active);
+        sprite.sprite = Active ? ActiveSprite : InactiveSprite;
     }
 
     void OnDisable() {
     }
 
+#if UNITY_EDITOR
     void OnDrawGizmos() {
         Gizmos.color = Color.green.withAlpha(0.15f);
         var otherTorches = FindObjectsOfType<Torch>();
@@ -37,4 +53,5 @@ public class Torch : MonoBehaviour {
         GUI.Label(new Rect(screenPos.x - (size.x / 2), -screenPos.y + view.position.height, size.x, size.y), text);
         UnityEditor.Handles.EndGUI();
     }
+#endif
 }
