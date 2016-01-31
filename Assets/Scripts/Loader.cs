@@ -36,10 +36,10 @@ public class Loader : MonoBehaviour {
             Levels[i].gameObject.SetActive(false);
             Levels[i].transform.position = transform.position.plusX(LevelGap * i);
         }
-        ActivateLevel(0);
+        ActivateLevel(0, true);
 	}
 
-    public void ActivateLevel(int level) {
+    public void ActivateLevel(int level, bool isInitial = false) {
         if (level < 0 || level >= Levels.Length) {
             return;
         }
@@ -47,9 +47,7 @@ public class Loader : MonoBehaviour {
             Levels[i].gameObject.SetActive(true);
         }
         currentLevel = level;
-        LoadingText.gameObject.SetActive(true);
-        LoadingText.text = ROMAN_NUMERALS[currentLevel];
-        Tween.MoveTo(Camera.main.gameObject, Camera.main.transform.position.withX(LevelGap * currentLevel), 1f, Interpolate.EaseType.EaseOutQuart, obj => {
+        System.Action<GameObject> finishLevelTransition = obj => {
             for (int i = 0; i < Levels.Length; i++) {
                 if (i != currentLevel) {
                     Levels[i].gameObject.SetActive(false);
@@ -58,7 +56,18 @@ public class Loader : MonoBehaviour {
             LoadingText.gameObject.SetActive(false);
             polygonSolver.Vertexes = Levels[currentLevel].Vertexes;
             polygonSolver.LineColliders = Levels[currentLevel].LineColliders;
-        });
+        };
+        if (!isInitial) {
+            LoadingText.gameObject.SetActive(true);
+            LoadingText.text = ROMAN_NUMERALS[currentLevel];
+            Tween.MoveTo(Camera.main.gameObject, Camera.main.transform.position.withX(LevelGap * currentLevel), 1f, Interpolate.EaseType.EaseOutQuart, finishLevelTransition);
+        } else {
+            finishLevelTransition(null);
+        }
+    }
+
+    public void Win() {
+        NextLevel();
     }
 
     public void NextLevel() {

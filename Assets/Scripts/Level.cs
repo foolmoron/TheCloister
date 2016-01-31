@@ -22,9 +22,14 @@ public class Level : MonoBehaviour {
     bool isDrawing;
     Torch[] torches;
 
+    Loader loader;
+    PolygonSolver polygonSolver;
+
     void Awake() {
         var solutionCount = SolutionLineAngles.Length + SolutionTriangles + SolutionSquares;
 
+        loader = FindObjectOfType<Loader>();
+        polygonSolver = FindObjectOfType<PolygonSolver>();
         torches = GetComponentsInChildren<Torch>();
         
         for (int i = 0; i < MAX_LINES; i++) {
@@ -33,6 +38,45 @@ public class Level : MonoBehaviour {
             lines[i].transform.localPosition = Vector3.zero;
             lineSprites[i] = lines[i].GetComponentInChildren<SpriteRenderer>().gameObject;
             LineColliders[i] = lines[i].GetComponentInChildren<Collider2D>();
+        }
+    }
+
+    public void CheckVictory() {
+        var allTorches = true;
+        for (int i = 0; i < torches.Length; i++) {
+            var pos = torches[i].transform.position.to2();
+            allTorches &= Vertexes.Contains(pos);
+        }
+
+        var matchingStrayLines = 0;
+        var alreadyMatchedLines = new List<int>();
+        for (int i = 0; i < SolutionLineAngles.Length; i++) {
+            var angle = SolutionLineAngles[i];
+            var matched = false;
+            for (int j = 0; j < polygonSolver.StrayLines.Count; j++) {
+                if (!alreadyMatchedLines.Contains(j) && Mathf.Abs(angle - polygonSolver.StrayLines[j].Degrees % 180) < 20f) {
+                    matched = true;
+                    alreadyMatchedLines.Add(j);
+                }
+            }
+            if (matched) {
+                matchingStrayLines++;
+            }
+        }
+
+        var matchingTriangles = 0;
+        var matchingSquares = 0;
+        for (int i = 0; i < polygonSolver.Polygons.Count; i++) {
+            if (polygonSolver.Polygons[i].indexes.Count == 4) {
+                matchingTriangles++;
+            } else if (polygonSolver.Polygons[i].indexes.Count == 5) {
+                matchingSquares++;
+            }
+        }
+
+        var solved = allTorches && (matchingStrayLines == SolutionLineAngles.Length) && (matchingTriangles == SolutionTriangles) && (matchingSquares == SolutionSquares);
+        if (solved) {
+            loader.Win();
         }
     }
 
@@ -50,16 +94,29 @@ public class Level : MonoBehaviour {
                 }
                 if (torch != null) {
                     var torchPos = torch.transform.position.to2();
-                    if (Vertexes.Count == 0 || Vertexes[Vertexes.Count - 1] == torchPos) {
-                        Vertexes.Add(torchPos);
-                        Vertexes.Add(mouseWorldPos); // will be updated on drag
-                        isDrawing = true;
+                    if (Vertexes.Count != 0) {
+                        while (Vertexes.Count > 0) {
+                            if (Vertexes[Vertexes.Count - 1] == torchPos) {
+                                break;
+                            }
+                            Vertexes.RemoveAt(Vertexes.Count - 1);
+                        }
                     }
+                    if (Vertexes.Count == 0) {
+                        Vertexes.Add(torchPos);
+                    }
+                    Vertexes.Add(mouseWorldPos); // will be updated on drag
+                    isDrawing = true;
                 }
             } else if (Input.GetMouseButtonUp(0)) {
-                // stop drawing and remove the mouse vertex
-                isDrawing = false;
-                Vertexes.RemoveAt(Vertexes.Count - 1);
+                if (isDrawing) {
+                    // stop drawing and remove the mouse vertex
+                    isDrawing = false;
+                    Vertexes.RemoveAt(Vertexes.Count - 1);
+                    // then check for victory
+                    polygonSolver.Solve();
+                    CheckVictory();
+                }
             } else if (Input.GetMouseButton(0) && isDrawing) {
                 // check for collision with new torch
                 Torch torch = null;

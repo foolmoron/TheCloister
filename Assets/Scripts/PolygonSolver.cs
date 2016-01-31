@@ -6,15 +6,21 @@ using System.Security.Cryptography;
 
 public class PolygonSolver : MonoBehaviour {
 
-    class CollisionPoint {
+    public class CollisionPoint {
         public int index;
         public Vector2 point;
     }
 
-    class Path {
+    public class Path {
         public List<int> indexes;
         public int latestIndex;
         public float sqrLength;
+    }
+
+    public class StrayLine {
+        public Vector2 Start;
+        public Vector2 End;
+        public float Degrees { get { return Mathf.Atan2(End.y - Start.y, End.x - Start.y); } }
     }
 
     public LayerMask LayerMask;
@@ -28,7 +34,8 @@ public class PolygonSolver : MonoBehaviour {
     [Range(0, 1)]
     public float SqrMagnitudeThreshold = 0.1f;
     List<Path> paths = new List<Path>();
-    List<Path> polygons = new List<Path>();
+    public List<Path> Polygons = new List<Path>();
+    public List<StrayLine> StrayLines = new List<StrayLine>();
 
     GameObject[] collisionDots = new GameObject[MAX_COLLISION_POINTS];
     public GameObject CollisionDotPrefab;
@@ -43,6 +50,10 @@ public class PolygonSolver : MonoBehaviour {
     }
 
     void Update() {
+        Solve();
+    }
+
+    public void Solve() {
         // reset collision points
         {
             collisionPoints.Clear();
@@ -65,6 +76,18 @@ public class PolygonSolver : MonoBehaviour {
                 var results = new RaycastHit2D[MAX_COLLISION_POINTS];
                 var count = Physics2D.RaycastNonAlloc(prevVertex, vectorToLine, results, distToLine, LayerMask);
                 CollisionPoint previousPoint = null;
+                for (int k = 0; k < collisionPoints.Count; k++) {
+                    if ((prevVertex- collisionPoints[k].point).sqrMagnitude < SqrMagnitudeThreshold) {
+                        previousPoint = collisionPoints[k];
+                    };
+                }
+                if (previousPoint == null) {
+                    previousPoint= new CollisionPoint {
+                        index = collisionPoints.Count,
+                        point = prevVertex,
+                    };
+                    collisionPoints.Add(previousPoint);
+                }
                 for (int j = 0; j < count; j++) {
                     var hit = results[j];
                     if (hit.collider != currentLineCollider) {
@@ -86,6 +109,22 @@ public class PolygonSolver : MonoBehaviour {
                         }
                         previousPoint = collisionPoint;
                     }
+                }
+                CollisionPoint lastPoint = null;
+                for (int k = 0; k < collisionPoints.Count; k++) {
+                    if ((currentVertex - collisionPoints[k].point).sqrMagnitude < SqrMagnitudeThreshold) {
+                        lastPoint = collisionPoints[k];
+                    };
+                }
+                if (lastPoint == null) {
+                    lastPoint = new CollisionPoint {
+                        index = collisionPoints.Count,
+                        point = currentVertex,
+                    };
+                    collisionPoints.Add(lastPoint);
+                }
+                for (int c = 0; previousPoint != null && c < count; c++) {
+                    adjacencies[lastPoint.index][previousPoint.index] = adjacencies[previousPoint.index][lastPoint.index] = true;
                 }
             }
         }
@@ -126,7 +165,7 @@ public class PolygonSolver : MonoBehaviour {
             }
         }
         // remove duplicates in final cycles
-        polygons.Clear();
+        Polygons.Clear();
         {
             var vertsToCycles = new Dictionary<HashSet<int>, List<Path>>(new SetComparer());
             for (int i = 0; i < finalCyclesWithDupes.Count; i++) {
@@ -138,7 +177,53 @@ public class PolygonSolver : MonoBehaviour {
             }
             foreach (var pair in vertsToCycles) {
                 pair.Value.Sort((c1, c2) => c1.sqrLength.CompareTo(c2.sqrLength));
-                polygons.Add(pair.Value[0]);
+                Polygons.Add(pair.Value[0]);
+            }
+        }
+        // find non-polygon points
+        var nonPolygonPoints = new List<CollisionPoint>();
+        {
+            var polygonPoints = new HashSet<int>();
+            for (int i = 0; i < Polygons.Count; i++) {
+                for (int j = 0; j < Polygons[i].indexes.Count; j++) {
+                    polygonPoints.Add(Polygons[i].indexes[j]);
+                }
+            }
+            for (int i = 0; i < collisionPoints.Count; i++) {
+                if (!polygonPoints.Contains(i)) {
+                    nonPolygonPoints.Add(collisionPoints[i]);
+                }
+            }
+        }
+        // find stray lines from non-polygon points
+        {
+            StrayLines.Clear();
+            for (int i = 0; i < nonPolygonPoints.Count; i++) {
+                var startPoint = nonPolygonPoints[i];
+                for (int j = 0; j < adjacencies[startPoint.index].Length; j++) {
+                    if (adjacencies[startPoint.index][j]) {
+                        if (startPoint.point != collisionPoints[j].point) {
+                            StrayLines.Add(new StrayLine {
+                                Start = startPoint.point,
+                                End = collisionPoints[j].point,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        // remove stray line duplicates
+        {
+            for (int i = 0; i < StrayLines.Count; i++) {
+                var firstLine = StrayLines[i];
+                for (int j = i + 1; j < StrayLines.Count; j++) {
+                    var otherLine = StrayLines[j];
+                    if ((firstLine.Start == otherLine.Start && firstLine.End == otherLine.End) ||
+                        (firstLine.Start == otherLine.End && firstLine.End == otherLine.Start)) {
+                        StrayLines.RemoveAt(j);
+                        j--;
+                    }
+                }
             }
         }
         // setup dots based on final points
@@ -173,9 +258,9 @@ public class PolygonSolver : MonoBehaviour {
             for (int i = 0; i < collisionPoints.Count; i++) {
                 drawString(i.ToString(), collisionPoints[i].point, Color.white);
             }
-            for (int i = 0; i < polygons.Count; i++) {
-                Gizmos.color = new HSBColor(Mathf.Lerp(0.25f, 0.8f, (float)i / (polygons.Count - 1)), 1, 1).ToColor();
-                var polygon = polygons[i];
+            for (int i = 0; i < Polygons.Count; i++) {
+                Gizmos.color = new HSBColor(Mathf.Lerp(0.25f, 0.8f, (float)i / (Polygons.Count - 1)), 1, 1).ToColor();
+                var polygon = Polygons[i];
                 for (int j = 1; j < polygon.indexes.Count; j++) {
                     Gizmos.DrawLine(collisionPoints[polygon.indexes[j]].point, collisionPoints[polygon.indexes[j - 1]].point);
                 }
