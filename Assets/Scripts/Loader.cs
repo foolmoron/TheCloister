@@ -28,6 +28,8 @@ public class Loader : MonoBehaviour {
 
     public AudioClip WinSound;
 
+    public GameObject FlashPrefab;
+
     PolygonSolver polygonSolver;
 
     IEnumerator Start() {
@@ -73,9 +75,12 @@ public class Loader : MonoBehaviour {
         }
     }
 
-    public void Win() {
+    public void Win(Torch[] torches) {
         PlayerPrefs.SetInt("solved", Mathf.Max(PlayerPrefs.GetInt("solved"), currentLevel + 1));
         AudioSource.PlayClipAtPoint(WinSound, transform.position);
+        for (int i = 0; i < torches.Length; i++) {
+            var flash = (GameObject) Instantiate(FlashPrefab, torches[i].transform.position.withZ(-5), Quaternion.identity);
+        }
     }
 
     public void NextLevel() {

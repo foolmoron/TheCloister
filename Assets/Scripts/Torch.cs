@@ -13,15 +13,12 @@ public class Torch : MonoBehaviour {
     public AudioClip FireOnSound;
     public AudioClip FireOffSound;
 
-    AudioSource audio;
-
     ParticleSystem particles;
     SpriteRenderer sprite;
     Shaker shaker;
 
     void Start() {
         Collider = GetComponent<Collider2D>();
-        audio = GetComponent<AudioSource>();
         particles = GetComponentInChildren<ParticleSystem>();
         sprite = transform.FindChild("Square").GetComponent<SpriteRenderer>();
         shaker = GetComponentInChildren<Shaker>();
@@ -33,7 +30,6 @@ public class Torch : MonoBehaviour {
         sprite.sprite = Active ? ActiveSprite : InactiveSprite;
         if (prevActive != Active) {
             AudioSource.PlayClipAtPoint(Active ? FireOnSound : FireOffSound, transform.position);
-            if (Active) audio.Play(); else audio.Stop();
         }
         prevActive = Active;
     }

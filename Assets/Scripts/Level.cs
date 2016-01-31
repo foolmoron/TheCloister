@@ -152,7 +152,7 @@ public class Level : MonoBehaviour {
                     if (CheckVictory()) {
                         // handle victory
                         Solved = true;
-                        loader.Win();
+                        loader.Win(torches);
                     } else {
                         // handle failure
                         Vertexes.Clear();

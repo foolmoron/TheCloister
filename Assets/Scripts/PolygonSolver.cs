@@ -40,6 +40,8 @@ public class PolygonSolver : MonoBehaviour {
     GameObject[] collisionDots = new GameObject[MAX_COLLISION_POINTS];
     public GameObject CollisionDotPrefab;
 
+    AudioSource audio;
+
     void Start() {
         adjacencies = new bool[MAX_COLLISION_POINTS][];
         for (int i = 0; i < MAX_COLLISION_POINTS; i++) {
@@ -47,10 +49,16 @@ public class PolygonSolver : MonoBehaviour {
             collisionDots[i] = Instantiate(CollisionDotPrefab);
             collisionDots[i].transform.parent = transform;
         }
+        audio = GetComponent<AudioSource>();
     }
     
     void Update() {
         CollisionPointStuff();
+        if (Vertexes.Count > 0 && !audio.isPlaying) {
+            audio.Play();
+        } else if (Vertexes.Count == 0 && audio.isPlaying) {
+            audio.Stop();
+        }
     }
 
     public void CollisionPointStuff() {

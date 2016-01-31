@@ -9,6 +9,8 @@ public class LoadButton : MonoBehaviour {
     SpriteRenderer sprite;
     Loader loader;
 
+    public AudioClip Sound;
+
     void Start() {
         loader = FindObjectOfType<Loader>();
         collider = GetComponent<Collider2D>();
@@ -23,8 +25,10 @@ public class LoadButton : MonoBehaviour {
             if (Input.GetMouseButtonDown(0) && (collider.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition)))) {
                 if (Next) {
                     loader.NextLevel();
+                    AudioSource.PlayClipAtPoint(Sound, Camera.main.transform.position);
                 } else {
                     loader.PreviousLevel();
+                    AudioSource.PlayClipAtPoint(Sound, Camera.main.transform.position);
                 }
             }
         }
