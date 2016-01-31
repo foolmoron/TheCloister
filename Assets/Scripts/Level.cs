@@ -5,11 +5,19 @@ using System.Collections.Generic;
 
 public class Level : MonoBehaviour {
 
+    [Range(0, 179)]
     public float[] SolutionLineAngles;
     [Range(0, 5)]
     public int SolutionTriangles;
     [Range(0, 5)]
     public int SolutionSquares;
+
+    public GameObject IconLinePrefab;
+    public GameObject IconTrianglePrefab;
+    public GameObject IconSquarePrefab;
+    [Range(0, 3)]
+    public float IconGap = 0.6f;
+    public float IconY = 2.5f;
 
     public List<Vector2> Vertexes = new List<Vector2>();
 
@@ -26,7 +34,26 @@ public class Level : MonoBehaviour {
     PolygonSolver polygonSolver;
 
     void Awake() {
-        var solutionCount = SolutionLineAngles.Length + SolutionTriangles + SolutionSquares;
+        // setup icons
+        {
+            var solutionCount = SolutionLineAngles.Length + SolutionTriangles + SolutionSquares;
+            var x = (float)(solutionCount - 1) * -IconGap / 2;
+            for (int i = 0; i < solutionCount; i++) {
+                GameObject newIcon = null;
+                if (i < SolutionLineAngles.Length) {
+                    newIcon = Instantiate(IconLinePrefab);
+                } else if (i < SolutionLineAngles.Length + SolutionTriangles) {
+                    newIcon = Instantiate(IconTrianglePrefab);
+                } else if (i < SolutionLineAngles.Length + SolutionTriangles + SolutionSquares) {
+                    newIcon = Instantiate(IconSquarePrefab);
+                }
+                newIcon.transform.parent = transform;
+                newIcon.transform.localPosition = new Vector3(x + i * IconGap, IconY, 10);
+                if (i < SolutionLineAngles.Length) {
+                    newIcon.transform.rotation = Quaternion.Euler(0, 0, SolutionLineAngles[i]);
+                }
+            }
+        }
 
         loader = FindObjectOfType<Loader>();
         polygonSolver = FindObjectOfType<PolygonSolver>();
