@@ -77,7 +77,7 @@ public class Loader : MonoBehaviour {
 
     public void Win(Torch[] torches) {
         PlayerPrefs.SetInt("solved", Mathf.Max(PlayerPrefs.GetInt("solved"), currentLevel + 1));
-        AudioSource.PlayClipAtPoint(WinSound, transform.position);
+        AudioSource.PlayClipAtPoint(WinSound, Camera.main.transform.position.withZ(-7));
         for (int i = 0; i < torches.Length; i++) {
             var flash = (GameObject) Instantiate(FlashPrefab, torches[i].transform.position.withZ(-5), Quaternion.identity);
         }
