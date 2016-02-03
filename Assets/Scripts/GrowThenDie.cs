@@ -10,7 +10,7 @@ public class GrowThenDie : MonoBehaviour {
 
     void Start() {
         Tween.ScaleTo(gameObject, new Vector3(FinalScale, FinalScale, 1), Duration, Interpolate.EaseType.EaseOutQuad);
-        Tween.ColorTo(gameObject, GetComponent<SpriteRenderer>().color.withAlpha(0), Duration, Interpolate.EaseType.EaseInExpo);
+        Tween.ColorTo(gameObject, GetComponent<SpriteRenderer>().color.withAlpha(0), Duration, Interpolate.EaseType.EaseInQuad);
         Destroy(gameObject, Duration);
     }
 }
