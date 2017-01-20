@@ -113,8 +113,8 @@ public class Tweening : MonoBehaviour
             }
 		}
 		
-		rotationDuration += Time.deltaTime;
         if (rotationDuration < rotationDurationTotal) {
+            rotationDuration += Time.deltaTime;
             if (rotationDuration >= rotationDurationTotal) {
                 rotationDuration = rotationDurationTotal;
             }
@@ -128,8 +128,8 @@ public class Tweening : MonoBehaviour
             }
 		}
 		
-		scaleDuration += Time.deltaTime;
         if (scaleDuration < scaleDurationTotal) {
+            scaleDuration += Time.deltaTime;
             if (scaleDuration >= scaleDurationTotal) {
                 scaleDuration = scaleDurationTotal;
             }
@@ -143,8 +143,8 @@ public class Tweening : MonoBehaviour
             }
 		}
 		
-		colorDuration += Time.deltaTime;
         if (colorDuration < colorDurationTotal) {
+            colorDuration += Time.deltaTime;
             if (colorDuration >= colorDurationTotal) {
                 colorDuration = colorDurationTotal;
             }
