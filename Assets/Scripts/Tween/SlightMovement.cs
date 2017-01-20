@@ -10,6 +10,7 @@ public class SlightMovement : MonoBehaviour {
 
     void Start() {
         originalPos = transform.localPosition;
+        Duration = Duration * (0.8f + Random.value * 0.3f);
         MoveToNewSpot(gameObject);
     }
 
