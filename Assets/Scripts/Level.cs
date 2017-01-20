@@ -178,8 +178,7 @@ public class Level : MonoBehaviour {
                         Vertexes.Add(mouseWorldPos); // becomes the new mouse vertex
                     }
                 }
-                // set the mouse vertex
-                Vertexes[Vertexes.Count - 1] = mouseWorldPos;
+                Vertexes[Vertexes.Count - 1] = (Vertexes.Count <= torches.Length) ? mouseWorldPos.to2() : Vertexes[Vertexes.Count - 2];
             }
         }
         // reset lines
