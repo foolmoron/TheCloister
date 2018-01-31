@@ -22,7 +22,7 @@ public class Torch : MonoBehaviour {
     void Start() {
         Collider = GetComponent<Collider2D>();
         particles = GetComponentInChildren<ParticleSystem>();
-        sprite = transform.FindChild("Square").GetComponent<SpriteRenderer>();
+        sprite = transform.Find("Square").GetComponent<SpriteRenderer>();
         shaker = GetComponentInChildren<Shaker>();
 	}
 	
