@@ -26,16 +26,28 @@ public class Level : MonoBehaviour {
 
     public List<Vector2> Vertexes = new List<Vector2>();
 
-    public const int MAX_LINES = 100;
+    public const int MAX_LINES = 20;
     public GameObject LinePrefab;
     GameObject[] lines = new GameObject[MAX_LINES];
     public Collider2D[] LineColliders = new Collider2D[MAX_LINES];
+
+    public Config Config;
+    GameObject[] indicators = new GameObject[MAX_LINES];
+    SpriteRenderer[] indicatorSprites = new SpriteRenderer[MAX_LINES];
 
     bool isDrawing;
     Torch[] torches;
 
     Loader loader;
     PolygonSolver polygonSolver;
+
+    static int AngleToStrayLineType(float angle) {
+        angle += 22.5f;
+        angle += 360f;
+        var corner = (int)(angle / 45f);
+        corner %= 4;
+        return corner;
+    }
 
     void Awake() {
         // setup icons
@@ -70,6 +82,10 @@ public class Level : MonoBehaviour {
             lines[i].transform.parent = transform;
             lines[i].transform.localPosition = Vector3.zero;
             LineColliders[i] = lines[i].GetComponentInChildren<Collider2D>();
+            indicators[i] = Instantiate(Config.IndicatorPrefab);
+            indicators[i].transform.parent = transform;
+            indicators[i].transform.localPosition = Vector3.zero;
+            indicatorSprites[i] = indicators[i].GetComponentInChildren<SpriteRenderer>();
         }
     }
 
@@ -90,7 +106,7 @@ public class Level : MonoBehaviour {
                 if (tempAngle < 0f && tempAngle >= -5f) {
                     tempAngle = 0;
                 }
-                if (!alreadyMatchedLines.Contains(j) && Mathf.Abs(angle - (tempAngle + 360) % 180) < 10f) {
+                if (!alreadyMatchedLines.Contains(j) && AngleToStrayLineType(angle) == AngleToStrayLineType(polygonSolver.StrayLines[j].Degrees)) {
                     matched = true;
                     alreadyMatchedLines.Add(j);
                 }
@@ -180,6 +196,8 @@ public class Level : MonoBehaviour {
                 }
                 Vertexes[Vertexes.Count - 1] = (Vertexes.Count <= torches.Length) ? mouseWorldPos.to2() : Vertexes[Vertexes.Count - 2];
             }
+            // always solve
+            polygonSolver.Solve();
         }
         // reset lines
         {
@@ -202,6 +220,53 @@ public class Level : MonoBehaviour {
                 line.transform.rotation = Quaternion.Euler(0, 0, angleToLine * Mathf.Rad2Deg);
                 lineCollider.transform.localScale = lineCollider.transform.localScale.withX(distToLine);
                 lineCollider.transform.localPosition = new Vector3(distToLine / 2, 0, 5f);
+            }
+        }
+        // draw shape indicators
+        {
+            foreach (var indicator in indicators) {
+                indicator.SetActive(false);
+            }
+            var indicatorIndex = 0;
+            foreach (var line in polygonSolver.StrayLines) {
+                var thisVert = line.Start;
+                var prevVert = line.End;
+                var vectorToLine = thisVert - prevVert;
+                var distToLine = vectorToLine.magnitude;
+                var angleToLine = Mathf.Atan2(vectorToLine.y, vectorToLine.x);
+                var indicator = indicators[indicatorIndex];
+                switch (AngleToStrayLineType(line.Degrees)) {
+                    case 0: indicatorSprites[indicatorIndex].color = Config.HorizLineColor; break;
+                    case 1: indicatorSprites[indicatorIndex].color = Config.RightyLineColor; break;
+                    case 2: indicatorSprites[indicatorIndex].color = Config.VertLineColor; break;
+                    case 3: indicatorSprites[indicatorIndex].color = Config.LeftyLineColor; break;
+                }
+                indicatorIndex++;
+                indicator.SetActive(true);
+                indicator.transform.position = prevVert;
+                indicator.transform.rotation = Quaternion.Euler(0, 0, angleToLine * Mathf.Rad2Deg);
+                indicator.transform.localScale = new Vector3(distToLine, 1, 1);
+            }
+            foreach (var polygon in polygonSolver.Polygons) {
+                for (int i = 1; i < polygon.points.Count; i++) {
+                    var thisVert = polygon.points[i];
+                    var prevVert = polygon.points[i - 1];
+                    var vectorToLine = thisVert - prevVert;
+                    var distToLine = vectorToLine.magnitude;
+                    var angleToLine = Mathf.Atan2(vectorToLine.y, vectorToLine.x);
+                    var indicator = indicators[indicatorIndex];
+                    switch (polygon.indexes.Count) {
+                        case 4: indicatorSprites[indicatorIndex].color = Config.TriangleColor; break;
+                        case 5: indicatorSprites[indicatorIndex].color = Config.SquareColor; break;
+                        case 6: indicatorSprites[indicatorIndex].color = Config.PentagonColor; break;
+                        default: indicatorSprites[indicatorIndex].color = Config.HexOrMoreColor; break;
+                    }
+                    indicatorIndex++;
+                    indicator.SetActive(true);
+                    indicator.transform.position = prevVert;
+                    indicator.transform.rotation = Quaternion.Euler(0, 0, angleToLine * Mathf.Rad2Deg);
+                    indicator.transform.localScale = new Vector3(distToLine, 1, 1);
+                }
             }
         }
         // set torch state based on current vertexes
