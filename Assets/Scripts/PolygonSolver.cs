@@ -43,6 +43,12 @@ public class PolygonSolver : MonoBehaviour {
 
     AudioSource audio;
 
+    PoolOfList<int> intsPool = new PoolOfList<int>(500);
+    PoolOfList<Vector2> vec2sPool = new PoolOfList<Vector2>(500);
+    PoolOfList<Path> pathsPool = new PoolOfList<Path>(100);
+    PoolOfList<CollisionPoint> collisionsPool = new PoolOfList<CollisionPoint>(100);
+    //NonGameObjectPool<HashSet<int>> intSetPool = new NonGameObjectPool<HashSet<int>>(100) { OnRelease = set => set.Clear() };
+
     void Start() {
         adjacencies = new bool[MAX_COLLISION_POINTS][];
         for (int i = 0; i < MAX_COLLISION_POINTS; i++) {
@@ -154,56 +160,92 @@ public class PolygonSolver : MonoBehaviour {
             paths.Clear();
         }
         // find shortest cycle for each point
-        var finalCyclesWithDupes = new List<Path>();
+        var finalCyclesWithDupes = pathsPool.Obtain();
         {
             for (int startingPoint = 0; startingPoint < collisionPoints.Count; startingPoint++) {
-                var cycles = new List<Path>();
-                var pathsToBuild = new Stack<Path>();
-                pathsToBuild.Push(new Path {
-                    indexes = new List<int> { startingPoint },
+                var cycles = pathsPool.Obtain();
+                var pathsToBuild = pathsPool.Obtain();
+                pathsToBuild.Add(new Path {
+                    indexes = intsPool.Obtain().WithAdd(startingPoint),
                     points = vec2sPool.Obtain().WithAdd(collisionPoints[startingPoint].point),
                     latestIndex = startingPoint,
                     sqrLength = 0,
                 });
                 while(pathsToBuild.Count > 0) {
-                    var currentPath = pathsToBuild.Pop();
+                    var currentPath = pathsToBuild[pathsToBuild.Count - 1];
+                    pathsToBuild.RemoveAt(pathsToBuild.Count - 1);
                     for (int i = 0; i < collisionPoints.Count; i++) {
-                        var newPath = new Path {
-                            indexes = new List<int>(currentPath.indexes) { i },
-                            latestIndex = i,
-                            sqrLength = currentPath.sqrLength + (collisionPoints[i].point - collisionPoints[currentPath.latestIndex].point).sqrMagnitude,
-                        };
                         if (adjacencies[currentPath.latestIndex][i] && i == startingPoint && currentPath.indexes.Count > 2) {
-                            cycles.Add(newPath);
+                            cycles.Add(new Path {
+                                indexes = intsPool.Obtain().WithAddRange(currentPath.indexes).WithAdd(i),
+                                points = vec2sPool.Obtain().WithAddRange(currentPath.points).WithAdd(collisionPoints[i].point),
+                                latestIndex = i,
+                                sqrLength = currentPath.sqrLength + (collisionPoints[i].point - collisionPoints[currentPath.latestIndex].point).sqrMagnitude,
+                            });
                         } else if (adjacencies[currentPath.latestIndex][i] && !currentPath.indexes.Contains(i)) {
-                            pathsToBuild.Push(newPath);
+                            pathsToBuild.Add(new Path {
+                                indexes = intsPool.Obtain().WithAddRange(currentPath.indexes).WithAdd(i),
+                                points = vec2sPool.Obtain().WithAddRange(currentPath.points).WithAdd(collisionPoints[i].point),
+                                latestIndex = i,
+                                sqrLength = currentPath.sqrLength + (collisionPoints[i].point - collisionPoints[currentPath.latestIndex].point).sqrMagnitude,
+                            });
                         }
                     }
+                    intsPool.Release(currentPath.indexes);
+                    vec2sPool.Release(currentPath.points);
                 }
                 if (cycles.Count > 0) {
                     cycles.Sort((c1, c2) => c1.sqrLength.CompareTo(c2.sqrLength));
-                    finalCyclesWithDupes.Add(cycles[0]);
+                    finalCyclesWithDupes.Add(new Path {
+                        indexes = intsPool.Obtain().WithAddRange(cycles[0].indexes),
+                        points = vec2sPool.Obtain().WithAddRange(cycles[0].points),
+                        latestIndex = cycles[0].latestIndex,
+                        sqrLength = cycles[0].sqrLength,
+                    });
                 }
+                foreach (var c in cycles) {
+                    intsPool.Release(c.indexes);
+                    vec2sPool.Release(c.points);
+                }
+                pathsPool.Release(cycles);
+                foreach (var p in pathsToBuild) {
+                    intsPool.Release(p.indexes);
+                    vec2sPool.Release(p.points);
+                }
+                pathsPool.Release(pathsToBuild);
             }
         }
         // remove duplicates in final cycles
+        foreach (var p in Polygons) {
+            intsPool.Release(p.indexes);
+            vec2sPool.Release(p.points);
+        }
         Polygons.Clear();
         {
             var vertsToCycles = new Dictionary<HashSet<int>, List<Path>>(new SetComparer());
             for (int i = 0; i < finalCyclesWithDupes.Count; i++) {
-                var verts = new HashSet<int>(finalCyclesWithDupes[i].indexes);
+                var verts = new HashSet<int>();
+                foreach (var index in finalCyclesWithDupes[i].indexes) {
+                    verts.Add(index);
+                }
                 if (!vertsToCycles.ContainsKey(verts)) {
                     vertsToCycles[verts] = new List<Path>();
                 }
                 vertsToCycles[verts].Add(finalCyclesWithDupes[i]);
+                //intSetPool.Release(verts);
             }
             foreach (var pair in vertsToCycles) {
                 pair.Value.Sort((c1, c2) => c1.sqrLength.CompareTo(c2.sqrLength));
-                Polygons.Add(pair.Value[0]);
+                Polygons.Add(new Path {
+                    indexes = intsPool.Obtain().WithAddRange(pair.Value[0].indexes),
+                    points = vec2sPool.Obtain().WithAddRange(pair.Value[0].points),
+                    latestIndex = pair.Value[0].latestIndex,
+                    sqrLength = pair.Value[0].sqrLength,
+                });
             }
         }
         // find non-polygon points
-        var nonPolygonPoints = new List<CollisionPoint>();
+        var nonPolygonPoints = collisionsPool.Obtain();
         {
             var polygonPoints = new HashSet<int>();
             for (int i = 0; i < Polygons.Count; i++) {
@@ -216,6 +258,7 @@ public class PolygonSolver : MonoBehaviour {
                     nonPolygonPoints.Add(collisionPoints[i]);
                 }
             }
+            //intSetPool.Release(polygonPoints);
         }
         // find stray lines from non-polygon points
         {
@@ -248,6 +291,12 @@ public class PolygonSolver : MonoBehaviour {
                 }
             }
         }
+        foreach (var c in finalCyclesWithDupes) {
+            intsPool.Release(c.indexes);
+            vec2sPool.Release(c.points);
+        }
+        pathsPool.Release(finalCyclesWithDupes);
+        collisionsPool.Release(nonPolygonPoints);
     }
 
     class SetComparer : IEqualityComparer<HashSet<int>> {

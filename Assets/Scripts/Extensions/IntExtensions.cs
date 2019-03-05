@@ -54,4 +54,8 @@ public static class IntExtensions {
         }
         return falseBits;
     }
+
+    public static int ThenBy(this int value, int thenBy) {
+        return value == 0 ? thenBy : value;
+    }
 }

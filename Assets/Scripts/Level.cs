@@ -26,7 +26,7 @@ public class Level : MonoBehaviour {
 
     public List<Vector2> Vertexes = new List<Vector2>();
 
-    public const int MAX_LINES = 20;
+    public const int MAX_LINES = 80;
     public GameObject LinePrefab;
     GameObject[] lines = new GameObject[MAX_LINES];
     public Collider2D[] LineColliders = new Collider2D[MAX_LINES];
@@ -81,10 +81,12 @@ public class Level : MonoBehaviour {
             lines[i] = Instantiate(LinePrefab);
             lines[i].transform.parent = transform;
             lines[i].transform.localPosition = Vector3.zero;
+            lines[i].SetActive(false);
             LineColliders[i] = lines[i].GetComponentInChildren<Collider2D>();
             indicators[i] = Instantiate(Config.IndicatorPrefab);
             indicators[i].transform.parent = transform;
             indicators[i].transform.localPosition = Vector3.zero;
+            indicators[i].SetActive(false);
             indicatorSprites[i] = indicators[i].GetComponentInChildren<SpriteRenderer>();
         }
     }

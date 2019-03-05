@@ -52,6 +52,7 @@ public class Loader : MonoBehaviour {
         }
         for (int i = 0; i < Levels.Length; i++) {
             Levels[i].gameObject.SetActive(true);
+            Levels[i].enabled = false;
         }
         currentLevel = level;
         System.Action<GameObject> finishLevelTransition = obj => {
@@ -60,6 +61,7 @@ public class Loader : MonoBehaviour {
                     Levels[i].gameObject.SetActive(false);
                 }
             }
+            Levels[currentLevel].enabled = true;
             LoadingText.gameObject.SetActive(false);
             polygonSolver.Vertexes = Levels[currentLevel].Vertexes;
             polygonSolver.LineColliders = Levels[currentLevel].LineColliders;
