@@ -13,6 +13,7 @@ public class PolygonSolver : MonoBehaviour {
 
     public class Path {
         public List<int> indexes;
+        public List<Vector2> points;
         public int latestIndex;
         public float sqrLength;
     }
@@ -29,7 +30,7 @@ public class PolygonSolver : MonoBehaviour {
     public Collider2D[] LineColliders;
 
     public const int MAX_COLLISION_POINTS = 100;
-    List<CollisionPoint> collisionPoints = new List<CollisionPoint>(MAX_COLLISION_POINTS);
+    public List<CollisionPoint> collisionPoints = new List<CollisionPoint>(MAX_COLLISION_POINTS);
     bool[][] adjacencies;
     [Range(0, 1)]
     public float SqrMagnitudeThreshold = 0.1f;
@@ -160,6 +161,7 @@ public class PolygonSolver : MonoBehaviour {
                 var pathsToBuild = new Stack<Path>();
                 pathsToBuild.Push(new Path {
                     indexes = new List<int> { startingPoint },
+                    points = vec2sPool.Obtain().WithAdd(collisionPoints[startingPoint].point),
                     latestIndex = startingPoint,
                     sqrLength = 0,
                 });
