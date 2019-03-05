@@ -2,6 +2,10 @@
 using System.Collections;
 
 public class Config : MonoBehaviour {
+    public GameObject IconLineHorizPrefab;
+    public GameObject IconLineVertPrefab;
+    public GameObject IconLineRightyPrefab;
+    public GameObject IconLineLeftyPrefab;
     public GameObject IndicatorPrefab;
     public Color HorizLineColor = Color.white;
     public Color VertLineColor = Color.white;

@@ -16,7 +16,6 @@ public class Level : MonoBehaviour {
 
     public bool Solved;
 
-    public GameObject IconLinePrefab;
     public GameObject IconTrianglePrefab;
     public GameObject IconSquarePrefab;
     public GameObject IconPentagonPrefab;
@@ -57,7 +56,12 @@ public class Level : MonoBehaviour {
             for (int i = 0; i < solutionCount; i++) {
                 GameObject newIcon = null;
                 if (i < SolutionLineAngles.Length) {
-                    newIcon = Instantiate(IconLinePrefab);
+                    switch (AngleToStrayLineType(SolutionLineAngles[i])) {
+                        case 0: newIcon = Instantiate(Config.IconLineHorizPrefab); break;
+                        case 1: newIcon = Instantiate(Config.IconLineRightyPrefab); break;
+                        case 2: newIcon = Instantiate(Config.IconLineVertPrefab); break;
+                        case 3: newIcon = Instantiate(Config.IconLineLeftyPrefab); break;
+                    }
                 } else if (i < SolutionLineAngles.Length + SolutionTriangles) {
                     newIcon = Instantiate(IconTrianglePrefab);
                 } else if (i < SolutionLineAngles.Length + SolutionTriangles + SolutionSquares) {
@@ -265,7 +269,7 @@ public class Level : MonoBehaviour {
                     }
                     indicatorIndex++;
                     indicator.SetActive(true);
-                    indicator.transform.position = prevVert;
+                    indicator.transform.position = prevVert.to3(0.01f - polygon.indexes.Count * 0.001f);
                     indicator.transform.rotation = Quaternion.Euler(0, 0, angleToLine * Mathf.Rad2Deg);
                     indicator.transform.localScale = new Vector3(distToLine, 1, 1);
                 }
