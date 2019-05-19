@@ -21,7 +21,7 @@ public class Level : MonoBehaviour {
     public GameObject IconPentagonPrefab;
     [Range(0, 3)]
     public float IconGap = 0.6f;
-    public float IconY = 2.5f;
+    public float IconYPos = 2.9f;
 
     public List<Vector2> Vertexes = new List<Vector2>();
 
@@ -70,7 +70,7 @@ public class Level : MonoBehaviour {
                     newIcon = Instantiate(IconPentagonPrefab);
                 }
                 newIcon.transform.parent = transform;
-                newIcon.transform.localPosition = new Vector3(x + i * IconGap, IconY, 10);
+                newIcon.transform.localPosition = new Vector3(x + i * IconGap, IconYPos, 10);
                 if (i < SolutionLineAngles.Length) {
                     newIcon.transform.rotation = Quaternion.Euler(0, 0, SolutionLineAngles[i]);
                 }
