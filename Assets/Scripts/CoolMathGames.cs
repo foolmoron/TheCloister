@@ -15,7 +15,7 @@ public static class CoolMathGames {
     [DllImport("__Internal")]
     public static extern void ReplayEvent();
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
     // Check right away if the domain is valid
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void BeforeSceneLoad() {

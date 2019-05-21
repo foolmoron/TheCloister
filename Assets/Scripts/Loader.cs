@@ -50,7 +50,9 @@ public class Loader : MonoBehaviour {
         if (level < 0 || level >= Levels.Length) {
             return;
         }
+#if UNITY_WEBGL && !UNITY_EDITOR
         CoolMathGames.StartLevelEvent(level);
+#endif
         for (int i = 0; i < Levels.Length; i++) {
             Levels[i].gameObject.SetActive(true);
             Levels[i].enabled = false;
