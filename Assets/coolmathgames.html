@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>The Cloister - Play it now at Coolmath-Games.com</title>
+    <script src="Build/UnityLoader.js"></script>
+    <script>
+      var gameInstance = UnityLoader.instantiate("gameContainer", "Build/cmg.json");
+    </script>
+    <script>
+	function unlockAllLevels(){
+		gameInstance.SendMessage("Loader", "UnlockAllLevels");
+	}
+    </script>
+    <style>
+      html {
+        width: 100%;
+        height: 100%; 
+      }
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #gameContainer {
+        width: 100% !important;
+        height: 100% !important;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="gameContainer" style="width: 100%; height: 100%; margin: 0;"></div>
+    <script>
+      function debounce(func, time, context) {
+          var timeoutId
+          return function() {
+              clearTimeout(timeoutId)
+              var args = arguments
+              timeoutId = setTimeout(function() { func.apply(context, args) }, time)
+          }
+      }
+      window.addEventListener('resize', debounce(function() {
+          var canvas = document.querySelector('canvas');
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+      }, 100));
+    </script>
+  </body>
+</html>

@@ -50,6 +50,7 @@ public class Loader : MonoBehaviour {
         if (level < 0 || level >= Levels.Length) {
             return;
         }
+        CoolMathGames.StartLevelEvent(level);
         for (int i = 0; i < Levels.Length; i++) {
             Levels[i].gameObject.SetActive(true);
             Levels[i].enabled = false;
@@ -93,21 +94,29 @@ public class Loader : MonoBehaviour {
         ActivateLevel(currentLevel - 1);
     }
 
+    public void LockAllLevels() {
+        PlayerPrefs.SetInt("solved", 0);
+        foreach (var level in Levels) {
+            level.Solved = false;
+            level.Vertexes.Clear();
+        }
+    }
+
+    public void UnlockAllLevels() {
+        PlayerPrefs.SetInt("solved", 999);
+        foreach (var level in Levels) {
+            level.Solved = true;
+            level.Vertexes.Clear();
+        }
+    }
+
     void Update() {
 #if DEBUG
         if (Input.GetKeyDown(KeyCode.P)) {
-            PlayerPrefs.SetInt("solved", 0);
-            for (int i = 0; i < Levels.Length; i++) {
-                Levels[i].Solved = false;
-                Levels[i].Vertexes.Clear();
-            }
+            LockAllLevels();
         }
         if (Input.GetKeyDown(KeyCode.U)) {
-            PlayerPrefs.SetInt("solved", 999);
-            for (int i = 0; i < Levels.Length; i++) {
-                Levels[i].Solved = true;
-                Levels[i].Vertexes.Clear();
-            }
+            UnlockAllLevels();
         }
 #endif
         if (Input.GetKeyDown(KeyCode.M)) {
